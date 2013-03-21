@@ -1,0 +1,118 @@
+                         _
+                  `\ `.
+                      (`- `.
+           __          `c.- \
+          (_ `---..__   `\"_ \
+            `(`-.__  `-._ (_c |
+              `--.____ ( `,-  | |/
+                  `---(___| ,---/         ,.
+                    ,-;::,'|_/\-|       ,' /
+            _.._    ||   `-'\@/@|_      | ||-.
+    _.--.--'    `-. \`--/,-._/    `\_,--',/|,-\
+  .',- _     _.__  `-:_|/   (      /      )|-'|
+ /_/_,;-  ,-'    `-._ _)_,-,-,___,'---'\___.-'
+ |___,,.  | _    _.-'' ((_{_// /
+ \.-'  | (-' \.-'       `---'`'
+    ,-'\__>  /|         /
+  .',-'/|.   \ \        |
+ / / _|``.`.  `/\_     /|  ,,.
+/  \  |  |  `-.`(_),. /((((   )
+|   `--\ `.`=. `-._`'|__|  `''
+|  ,'  |`-|   T``'',----.
+|      |  `.__|-,-',----.|
+\     / ,-' _,-;,-'      |
+ `---'  | ,;-''       _,'
+        `//       _,-'
+    \____.-''
+
+
+Asterisk AGI script (asterisk2gis.py) for display information about incoming callers, using databases 2gis.ru and rossfirm.ru (this only russian phone numbers) and small script (auto_transfer.py) they auto redirect incoming call based on rule: call the last person who called for the number of incoming.
+
+
+Details
+-------
+
+author:		  Ponomarev Dmitry (based on article http://habrahabr.ru/sandbox/40265/)
+email:		  captain.pereiro@gmail.com
+license:	  GPL
+website:	  .......
+
+Composition
+-----------
+
+asterisk2gis.py  	    -  AGI script replacing the incoming number to the name
+auto_transfer.py 	    -  AGI script auto redirect incoming call
+test.py		            -  Python script for test main function without agi
+voip.sql	            -  Database for mysql
+asterisk2gis_transfer.py    -  Mix two script asterisk2gis.py and auto_transfer.py
+
+Requirements
+------------
+
+- Mysql 5.1+
+- Asterisk 1.4+
+- python 2.6+
+	- MySQLdb
+	- urllib3
+	- simplejson
+	- lxml
+	- pyagi
+
+Installation
+------------
+Instruction for debian(ubuntu) system
+  1. Install depending
+
+	$ apt-get install easy_install python-dev libxml2  libxml2-dev libxslt-dev python-mysqldb mysql gcc zip unzip 
+	perhaps instead of a package easy_install you need to install python-setuptools
+	$ easy_install pip simplejson lxml
+	$ pip install urllib3
+	$ wget https://github.com/rdegges/pyagi/archive/develop.zip && unzip develop.zip
+	$ cd pyagi-develop && python setup.py install
+
+  2. Create database
+
+	$ mysql -uroot -p
+	$ CREATE DATABASE `voip` ; grant usage on *.* to voip@localhost identified by 'voip2voip'; grant all privileges on voip.* to voip@localhost;FLUSH PRIVILEGES; exit;
+	$ mysql -uroot -h127.0.0.1 -p voip < voip.sql
+
+  3. Create or add exten in /etc/asteris/extensions.conf 
+----for asterisk2gis.py work---------
+	[you_exten]
+	exten => s,1,AGI(/home/user/asterisk2gis.py)
+	exten => s,2,Set(CALLERID(name)=${calleridname})
+	exten => s,3,...you_rule.... 
+
+----for auto_transfer.py work-----
+	[you_exten]
+	exten => s,1,AGI(/root/auto_transfer.py)
+	exten => s,2,GotoIf($["${subnumber}" : "SIP/none"]?4:3)
+	exten => s,3,Dial(${subnumber},15,rt)
+	exten => s,4,Dial(...you_rule....) 
+
+----for asterisk2gis_transfer.py work-----
+	[you_exten]
+	exten => s,1,AGI(/home/user/asterisk2gis_transfer.py)
+	exten => s,2,Set(CALLERID(name)=${calleridname})
+	exten => s,3,GotoIf($["${subnumber}" : "SIP/none"]?5:4) # 5 - true 4 - false
+	exten => s,4,Dial(${subnubmer},15,rt)
+	exten => s,5,Dial(...you_rule....) 
+
+  4. Download project and set the execution bit on python scripts
+
+	$ cp asterisk2gis_transfer.py auto_transfer.py asterisk2gis.py /home/user/
+	$ chmod +x /home/user/asterisk2gis_transfer.py /home/user/auto_transfer.py /home/user/asterisk2gis.py
+
+  5. Edit cdrbase and calloutrec variable in script on your values  
+ 
+  6. You can test that all depending install correctly on testting script test.py
+
+	$ cp test.py /home/user/ && chmod +x  /home/user/test.py && cd  /home/user/test.py
+	$ ./test.py phone_number (example: ./test.py 3517770574 )
+
+-----GoodLuck------------
+
+
+
+ 
+
