@@ -95,7 +95,7 @@ Instruction for debian(ubuntu) system
 	exten => s,1,AGI(/home/user/asterisk2gis_transfer.py)
 	exten => s,2,Set(CALLERID(name)=${calleridname})
 	exten => s,3,GotoIf($["${subnumber}" : "SIP/none"]?5:4) # 5 - true 4 - false
-	exten => s,4,Dial(${subnubmer},15,rt)
+	exten => s,4,Dial(${subnumber},15,rt)
 	exten => s,5,Dial(...you_rule....) 
 
   4. Download project and set the execution bit on python scripts
